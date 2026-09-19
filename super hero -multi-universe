@@ -1,0 +1,141 @@
+using UnityEngine;
+using System.Collections;
+
+public abstract class HeroBase : MonoBehaviour
+{
+    [Header("Stats")]
+    public float maxHealth = 1000f;
+    public float maxEnergy = 500f;
+    public float strength = 100f;
+    public float speed = 10f;
+    public float defense = 50f;
+
+    [Header("Abilities")]
+    public float specialCooldown = 5f;
+    public float ultimateCooldown = 30f;
+
+    protected float health;
+    protected float energy;
+    protected bool specialReady = true;
+    protected bool ultimateReady = true;
+
+    protected virtual void Start()
+    {
+        health = maxHealth;
+        energy = maxEnergy;
+    }
+
+    public virtual void TakeDamage(float damage)
+    {
+        float finalDamage = Mathf.Max(1, damage - defense);
+        health -= finalDamage;
+
+        if (health <= 0)
+            OnDefeated();
+    }
+
+    public void RestoreHealth(float amount)
+    {
+        health = Mathf.Min(maxHealth, health + amount);
+    }
+
+    public bool UseEnergy(float amount)
+    {
+        if (energy < amount)
+            return false;
+
+        energy -= amount;
+        return true;
+    }
+
+    public abstract void SpecialAbility();
+
+    public abstract void UltimateAbility();
+
+    protected virtual void OnDefeated()
+    {
+        Debug.Log(name + " defeated!");
+    }
+}using UnityEngine;
+
+public class Volt : HeroBase
+{
+    public float electricDamage = 180f;
+    public float electricRadius = 8f;
+
+    public override void SpecialAbility()
+    {
+        if (!specialReady || !UseEnergy(75f))
+            return;
+
+        Collider[] targets =
+            Physics.OverlapSphere(transform.position, electricRadius);
+
+        foreach (Collider target in targets)
+        {
+            EnemyAI enemy = target.GetComponent<EnemyAI>();
+
+            if (enemy != null)
+                enemy.TakeDamage(electricDamage);
+        }
+
+        specialReady = false;
+        Invoke(nameof(ResetSpecial), specialCooldown);
+    }
+
+    public override void UltimateAbility()
+    {
+        if (!ultimateReady || !UseEnergy(250f))
+            return;
+
+        Collider[] targets =
+            Physics.OverlapSphere(transform.position, 20f);
+
+        foreach (Collider target in targets)
+        {
+            EnemyAI enemy = target.GetComponent<EnemyAI>();
+
+            if (enemy != null)
+                enemy.TakeDamage(500f);
+        }
+
+        ultimateReady = false;
+        Invoke(nameof(ResetUltimate), ultimateCooldown);
+    }
+
+    void ResetSpecial()
+    {
+        specialReady = true;
+    }
+
+    void ResetUltimate()
+    {
+        ultimateReady = true;
+    }
+}OPEN WORLD
+     ↓
+Dynamic Event Appears
+     ↓
+Player Accepts Event
+     ↓
+Objective Marker
+     ↓
+Travel / Parkour / Vehicle
+     ↓
+Enemy Encounter
+     ↓
+Combat
+     ↓
+Elite Enemy
+     ↓
+Boss
+     ↓
+Mission Complete
+     ↓
+XP + Credits + Equipment
+     ↓
+Hero Upgrade
+     ↓
+World Event Changes
+     ↓
+Next Mission
